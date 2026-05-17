@@ -24,11 +24,10 @@ public class VideoPublishedConsumer {
     private final FeedReadStore feedReadStore;
     private final ObjectMapper objectMapper;
 
-    @KafkaListener(topics = "youscout.video.events", groupId = "discovery-service",
-            filter = "videoPublishedFilter")
+    @KafkaListener(topics = "youscout.video.events", groupId = "discovery-service")
     public void consume(Map<String, Object> rawEnvelope) {
         try {
-            var envelope = objectMapper.convertValue(rawEnvelope,
+            EventEnvelope<Map<String, Object>> envelope = objectMapper.convertValue(rawEnvelope,
                     objectMapper.getTypeFactory().constructParametricType(EventEnvelope.class, Map.class));
 
             if (!"VideoPublished".equals(envelope.getEventType())) return;

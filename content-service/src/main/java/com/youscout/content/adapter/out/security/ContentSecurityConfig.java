@@ -40,7 +40,7 @@ public class ContentSecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/skills", "/api/v1/videos/*/stream",
-                                "/api/v1/videos/*", "/swagger-ui/**", "/v3/api-docs/**", "/actuator/**").permitAll()
+                                "/api/v1/videos/*", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/actuator/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
