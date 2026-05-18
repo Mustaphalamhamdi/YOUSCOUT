@@ -29,7 +29,7 @@ public class FeedController {
     @GetMapping("/feed")
     public ResponseEntity<List<FeedItem>> getFeed(
             @AuthenticationPrincipal String userId,
-            @RequestParam(defaultValue = "20") int limit) {
+            @RequestParam(name = "limit", defaultValue = "20") int limit) {
         return ResponseEntity.ok(getFeedUseCase.getFeed(userId, limit).items());
     }
 

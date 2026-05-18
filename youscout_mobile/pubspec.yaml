@@ -1,0 +1,58 @@
+name: youscout_mobile
+description: YouScout — Football talent discovery mobile app (Flutter MVP)
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.8.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management + DI
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # HTTP
+  dio: ^5.7.0
+
+  # Routing
+  go_router: ^14.8.1
+
+  # Storage
+  flutter_secure_storage: ^9.2.2
+  shared_preferences: ^2.3.3
+
+  # Video
+  video_player: ^2.9.2
+  chewie: ^1.8.5
+
+  # Media picker
+  image_picker: ^1.1.2
+
+  # Immutable models + JSON
+  freezed_annotation: ^3.0.0
+  json_annotation: ^4.9.0
+
+  # Functional error handling
+  dartz: ^0.10.1
+
+  # Logging
+  logger: ^2.5.0
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Code generation
+  build_runner: ^2.15.0
+  freezed: ^3.0.0
+  json_serializable: ^6.9.0
+
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

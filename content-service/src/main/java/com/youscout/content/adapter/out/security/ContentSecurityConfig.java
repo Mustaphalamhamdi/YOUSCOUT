@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -40,10 +41,20 @@ public class ContentSecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/skills", "/api/v1/videos/*/stream",
-                                "/api/v1/videos/*", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/actuator/**").permitAll()
+                                "/api/v1/videos/*", "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/actuator/**", "/error").permitAll()
                         .anyRequest().authenticated())
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint((req, res, ex) ->
+                                res.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED, "Unauthorised")))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
+    }
+
+    @Bean
+    public FilterRegistrationBean<JwtFilter> jwtFilterRegistration(JwtFilter filter) {
+        FilterRegistrationBean<JwtFilter> reg = new FilterRegistrationBean<>(filter);
+        reg.setEnabled(false); // Spring Security manages this — prevent global servlet registration
+        return reg;
     }
 
     @Bean
@@ -67,6 +78,8 @@ public class ContentSecurityConfig {
         @Override
         protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res,
                                         FilterChain chain) throws ServletException, IOException {
+            log.info("JwtFilter hit: {} auth={}", req.getRequestURI(),
+                    req.getHeader("Authorization") != null ? "present" : "MISSING");
             var header = req.getHeader("Authorization");
             if (header != null && header.startsWith("Bearer ")) {
                 try {
@@ -76,7 +89,7 @@ public class ContentSecurityConfig {
                             claims.getSubject(), null, List.of());
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 } catch (Exception e) {
-                    log.debug("Invalid JWT: {}", e.getMessage());
+                    log.warn("JWT validation failed: {}", e.getMessage());
                 }
             }
             chain.doFilter(req, res);

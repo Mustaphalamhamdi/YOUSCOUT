@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -41,8 +42,11 @@ public class DiscoverySecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/internal/**", "/swagger-ui.html", "/swagger-ui/**",
-                                "/v3/api-docs/**", "/actuator/**").permitAll()
+                                "/v3/api-docs/**", "/actuator/**", "/error").permitAll()
                         .anyRequest().authenticated())
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint((req, res, ex) ->
+                                res.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED, "Unauthorised")))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
@@ -54,6 +58,13 @@ public class DiscoverySecurityConfig {
                         .description("CQRS Read Side: feed served from Redis projection. Consumes VideoPublishedEvent + UserFollowedEvent from Kafka."))
                 .components(new Components().addSecuritySchemes("bearerAuth",
                         new SecurityScheme().type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT")));
+    }
+
+    @Bean
+    public FilterRegistrationBean<JwtFilter> jwtFilterRegistration(JwtFilter filter) {
+        FilterRegistrationBean<JwtFilter> reg = new FilterRegistrationBean<>(filter);
+        reg.setEnabled(false); // Spring Security manages this — prevent global servlet registration
+        return reg;
     }
 
     @Bean
@@ -71,6 +82,8 @@ public class DiscoverySecurityConfig {
         @Override
         protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res,
                                         FilterChain chain) throws ServletException, IOException {
+            log.info("JwtFilter hit: {} auth={}", req.getRequestURI(),
+                    req.getHeader("Authorization") != null ? "present" : "MISSING");
             var header = req.getHeader("Authorization");
             if (header != null && header.startsWith("Bearer ")) {
                 try {
@@ -79,7 +92,7 @@ public class DiscoverySecurityConfig {
                     SecurityContextHolder.getContext().setAuthentication(
                             new UsernamePasswordAuthenticationToken(claims.getSubject(), null, List.of()));
                 } catch (Exception e) {
-                    log.debug("Invalid JWT: {}", e.getMessage());
+                    log.warn("JWT validation failed: {}", e.getMessage());
                 }
             }
             chain.doFilter(req, res);

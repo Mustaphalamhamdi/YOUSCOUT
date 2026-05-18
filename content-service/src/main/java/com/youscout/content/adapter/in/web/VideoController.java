@@ -35,10 +35,10 @@ public class VideoController {
     public ResponseEntity<?> publishVideo(
             @AuthenticationPrincipal String userId,
             @RequestPart("file") MultipartFile file,
-            @RequestPart("description") String description,
-            @RequestPart(value = "uploaderName", required = false) String uploaderName,
-            @RequestPart(value = "skills", required = false) List<String> skills,
-            @RequestPart(value = "hashtags", required = false) List<String> hashtags) throws IOException {
+            @RequestParam("description") String description,
+            @RequestParam(value = "uploaderName", required = false) String uploaderName,
+            @RequestParam(value = "skills", required = false) List<String> skills,
+            @RequestParam(value = "hashtags", required = false) List<String> hashtags) throws IOException {
 
         var result = publishVideoUseCase.publish(new PublishVideoUseCase.PublishCommand(
                 userId,
